@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Para Você — Sob Todas as Luas</title>
+<meta name="description" content="Um site feito com todo o carinho, especialmente para você.">
+<meta name="robots" content="noindex, nofollow">
+
+<!-- ============================================================
+     FAVICON — coraçãozinho em SVG embutido, sem depender de arquivo externo
+     ============================================================ -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%96%A4%3C/text%3E%3C/svg%3E">
+
+<!-- ============================================================
+     GOOGLE FONTS
+     - Playfair Display: serifada, principal, usada nos títulos de quase todas as seções
+     - Cinzel: serifada "dramática", usada só no letreiro do Capítulo I (clima Vampire Diaries)
+     - Great Vibes: cursiva, usada com moderação (abertura/assinatura da carta e do rodapé)
+     - Poppins: moderna, usada nos textos corridos e na interface
+     ============================================================ -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500;1,600&family=Cinzel:wght@600;700;900&family=Great+Vibes&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ============================================================
+     RECORTE EM FORMATO DE CORAÇÃO — definido uma vez, usado por
+     todas as fotos (clip-path: url(#heartClip)) via CSS
+     ============================================================ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <clipPath id="heartClip" clipPathUnits="objectBoundingBox">
+      <path d="M0.5,1 C0.5,1 0,0.65 0,0.35 C0,0.15 0.15,0 0.325,0 C0.425,0 0.5,0.07 0.5,0.2 C0.5,0.07 0.575,0 0.675,0 C0.85,0 1,0.15 1,0.35 C1,0.65 0.5,1 0.5,1 Z"/>
+    </clipPath>
+  </defs>
+</svg>
+
+<!-- ============================================================
+     CURSOR PERSONALIZADO (desativado sozinho em telas de toque via JS/CSS)
+     ============================================================ -->
+<div class="custom-cursor" id="cursor" aria-hidden="true"></div>
+<div class="custom-cursor-ring" id="cursorRing" aria-hidden="true"></div>
+
+<!-- ============================================================
+     BARRA DE PROGRESSO DE ROLAGEM (fixa no topo)
+     ============================================================ -->
+<div class="scroll-progress-track" aria-hidden="true">
+  <div class="scroll-progress-bar" id="scrollProgress"></div>
+</div>
+
+<!-- ============================================================
+     INDICADOR DE CAPÍTULO — mostra em qual "ato" da história a pessoa está
+     (dispositivo estrutural: reforça que o site é dividido em 3 capítulos)
+     ============================================================ -->
+<nav class="chapter-indicator" id="chapterIndicator" aria-label="Capítulos da história">
+  <button class="chapter-dot" data-theme="tvd" data-target="hero" aria-label="Capítulo um">
+    <span class="chapter-roman">I</span><span class="chapter-name">mistério</span>
+  </button>
+  <button class="chapter-dot" data-theme="ag" data-target="titulo-ariana" aria-label="Capítulo dois">
+    <span class="chapter-roman">II</span><span class="chapter-name">doçura</span>
+  </button>
+  <button class="chapter-dot" data-theme="tw" data-target="titulo-teenwolf" aria-label="Capítulo três">
+    <span class="chapter-roman">III</span><span class="chapter-name">natureza</span>
+  </button>
+</nav>
+
+<!-- ============================================================
+     BOTÃO DE MÚSICA — flutuante, sempre acessível
+     Estados exatos pedidos: "▶ Tocar Música" / "♪ Música Pausada" / "♫ Tocando"
+     ============================================================ -->
+<button class="music-toggle" id="musicToggle" type="button" aria-label="Tocar ou pausar a música">
+  <span class="music-icon" id="musicIcon">▶</span>
+  <span class="music-label" id="musicLabel">Tocar Música</span>
+</button>
+
+<!-- Áudio real: o arquivo é adicionado depois pelo Kauan dentro da pasta /musica.
+     Testa vários formatos na ordem — o navegador usa o primeiro que encontrar,
+     então não precisa ser exatamente .mp3. -->
+<audio id="bgMusic" loop preload="none">
+  <source src="musica/nossa-musica.mp3" type="audio/mpeg">
+  <source src="musica/nossa-musica.m4a" type="audio/mp4">
+  <source src="musica/nossa-musica.wav" type="audio/wav">
+  <source src="musica/nossa-musica.ogg" type="audio/ogg">
+</audio>
+
+<!-- ============================================================
+     BOTÃO VOLTAR AO TOPO
+     ============================================================ -->
+<button class="back-to-top" id="backToTop" type="button" aria-label="Voltar ao topo">
+  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 4l-8 8h5v8h6v-8h5z" fill="currentColor"/></svg>
+</button>
+
+<!-- ============================================================
+     CONTÊINER DE PARTÍCULAS AMBIENTE (corações, névoa, poeira de estrela)
+     Preenchido dinamicamente pelo script.js
+     ============================================================ -->
+<div class="hearts-container" id="heartsContainer" aria-hidden="true"></div>
+
+<!-- ============================================================
+     BALÃO DE MENSAGEM SECRETA (para os corações escondidos clicáveis)
+     ============================================================ -->
+<div class="secret-bubble" id="secretBubble" role="status" aria-live="polite"></div>
+
+<main id="topo">
+
+  <!-- ================================================================
+       HERO — "Bem-vinda"
+       ================================================================ -->
+  <section id="hero" class="section hero" data-theme="tvd">
+    <div class="hero-bg" aria-hidden="true">
+      <div class="hero-gradient"></div>
+      <div class="moon moon--hero" data-parallax="0.15"></div>
+      <div class="stars-layer" id="heroStars"></div>
+      <div class="mist mist--1" data-parallax="0.05"></div>
+      <div class="mist mist--2" data-parallax="0.09"></div>
+      <div class="forest-silhouette" data-parallax="0.03">
+        <svg viewBox="0 0 1440 220" preserveAspectRatio="none"><polygon points="0,220 0,150 45,180 60,80 90,160 110,60 140,170 165,90 190,150 210,50 240,160 265,100 290,180 315,70 340,150 365,110 395,190 420,60 450,170 475,100 505,180 530,80 560,160 585,120 615,190 640,70 670,160 695,100 725,180 750,90 780,170 805,120 835,60 865,150 890,100 920,180 945,80 975,160 1000,110 1030,190 1055,70 1085,160 1110,100 1140,180 1165,90 1195,170 1220,120 1250,60 1280,150 1305,100 1335,180 1360,90 1390,160 1415,120 1440,180 1440,220" fill="#050208"/></svg>
+      </div>
+      <div class="vignette"></div>
+    </div>
+
+    <div class="hero-content reveal" data-reveal="fade-up">
+      <p class="eyebrow">uma história que começou baixinho, como todas as melhores</p>
+      <h1 class="hero-title">Sob Todas as Luas,<br><span class="hero-title-accent">Você.</span></h1>
+      <p class="hero-subtitle">Um lugar só nosso — feito de mistério, de brilho e de tudo aquilo que eu sinto e quase nunca consigo dizer direito.</p>
+
+      <!-- CONTADOR EM TEMPO REAL -->
+      <div class="counter" aria-live="off">
+        <span class="counter-label">juntos há</span>
+        <div class="counter-grid" id="counterGrid">
+          <div class="counter-unit"><span class="counter-value" id="cAnos">0</span><span class="counter-unit-label">anos</span></div>
+          <div class="counter-unit"><span class="counter-value" id="cMeses">0</span><span class="counter-unit-label">meses</span></div>
+          <div class="counter-unit"><span class="counter-value" id="cDias">0</span><span class="counter-unit-label">dias</span></div>
+          <div class="counter-unit"><span class="counter-value" id="cHoras">00</span><span class="counter-unit-label">horas</span></div>
+          <div class="counter-unit"><span class="counter-value" id="cMinutos">00</span><span class="counter-unit-label">min</span></div>
+          <div class="counter-unit"><span class="counter-value" id="cSegundos">00</span><span class="counter-unit-label">seg</span></div>
+        </div>
+      </div>
+
+      <div class="hero-buttons">
+        <button class="btn btn-primary" data-scroll-to="titulo-tvd">Começar</button>
+        <button class="btn btn-outline" data-scroll-to="nossa-historia">Nossa História</button>
+      </div>
+    </div>
+
+    <button class="scroll-indicator" data-scroll-to="titulo-tvd" aria-label="Rolar para descobrir">
+      <span>role para descobrir</span>
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 16l-6-6h12z" fill="currentColor"/></svg>
+    </button>
+  </section>
+
+  <!-- ================================================================
+       CAPÍTULO I — LETREIRO (inspirado em The Vampire Diaries)
+       Preto, vermelho e branco, tipografia grande e centralizada — como pedido.
+       Obs: o texto abaixo é uma composição tipográfica original (fonte Cinzel +
+       efeitos de CSS), não uma cópia do logotipo oficial da série.
+       ================================================================ */-->
+  <section id="titulo-tvd" class="section chapter-card" data-theme="tvd">
+    <div class="chapter-card-glow" aria-hidden="true"></div>
+    <div class="chapter-frame" aria-hidden="true">
+      <span class="corner-mark corner-mark--tl"></span>
+      <span class="corner-mark corner-mark--tr"></span>
+      <span class="corner-mark corner-mark--bl"></span>
+      <span class="corner-mark corner-mark--br"></span>
+    </div>
+    <div class="candle candle--left reveal" data-reveal="fade" aria-hidden="true"><span class="flame"></span></div>
+    <div class="chapter-card-content reveal" data-reveal="zoom">
+      <span class="eyebrow eyebrow--center">capítulo um</span>
+      <!-- letreiro: composição tipográfica original (fonte Cinzel + brilho em CSS),
+           não uma cópia do logotipo oficial da série -->
+      <h2 class="wordmark">
+        <span class="wordmark-the">the</span>
+        <span class="wordmark-main">Vampire<br>Diaries</span>
+      </h2>
+      <svg class="ornament" viewBox="0 0 300 30" width="210" height="22" aria-hidden="true">
+        <path d="M0 15 C 55 2, 95 2, 128 15 L145 8 L162 15 C195 2, 235 2, 300 15" stroke="#e4cd9d" stroke-width="1" fill="none"/>
+        <circle cx="145" cy="15" r="3.5" fill="#e4cd9d"/>
+      </svg>
+      <p class="chapter-card-line">porque todo grande amor também guarda um pouco de mistério.</p>
+    </div>
+    <div class="candle candle--right reveal" data-reveal="fade" aria-hidden="true"><span class="flame"></span></div>
+  </section>
+
+  <!-- ================================================================
+       NOSSA HISTÓRIA
+       ================================================================ -->
+  <section id="nossa-historia" class="section" data-theme="tvd">
+    <div class="mist mist--3" data-parallax="0.04" aria-hidden="true"></div>
+    <div class="section-inner">
+      <p class="eyebrow reveal" data-reveal="fade-up">capítulo dois</p>
+      <h2 class="section-title reveal" data-reveal="fade-up">Nossa História</h2>
+
+      <!-- PERSONALIZE: troque os três parágrafos abaixo pelos capítulos reais de vocês
+           (como se conheceram, um momento marcante, o que vivem hoje). O texto atual
+           foi escrito para funcionar mesmo sem os detalhes — mas fica ainda mais
+           bonito com a história de verdade. -->
+      <div class="diary-card glass-card reveal" data-reveal="slide-right">
+        <span class="wax-seal" aria-hidden="true">♥</span>
+        <p class="diary-entry">
+          <strong>O começo.</strong> Toda história de amor tem um instante em que deixa de ser coincidência
+          e passa a ser escolha. Não sei precisar o segundo exato em que isso aconteceu com a gente —
+          só sei que, num piscar de olhos, você deixou de ser novidade e virou constância.
+        </p>
+        <p class="diary-entry">
+          <strong>Hoje.</strong> Entre risadas bobas, silêncios confortáveis, séries maratonadas até tarde
+          e planos rabiscados no meio de conversas aleatórias, fomos construindo um jeito só nosso de
+          existir. Um jeito que eu não troco por nada.
+        </p>
+        <p class="diary-entry">
+          <strong>O que vem depois.</strong> Se essa história fosse uma série, eu diria que ainda estamos
+          no começo — e que mal posso esperar pelos próximos episódios, especialmente aqueles em que
+          simplesmente nada de especial acontece, porque estar com você já é o suficiente.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       CARTA
+       ================================================================ -->
+  <section id="carta" class="section" data-theme="tvd">
+    <div class="section-inner section-inner--narrow">
+      <p class="eyebrow reveal" data-reveal="fade-up">uma carta para você</p>
+      <h2 class="section-title reveal" data-reveal="fade-up">Se um dia você duvidar...</h2>
+
+      <!-- PERSONALIZE: sinta-se livre para reescrever qualquer trecho da carta abaixo,
+           trocar detalhes ou acrescentar algo que só vocês dois entendam. -->
+      <div class="letter-card glass-card reveal" data-reveal="fade-up">
+        <p class="letter-greeting">Para você,</p>
+
+        <p class="letter-paragraph">Antes de mais nada, preciso te dizer uma coisa simples e enorme ao mesmo tempo: você mudou a forma como eu enxergo os meus dias.</p>
+
+        <p class="letter-paragraph">Não sei explicar direito o momento exato em que percebi que você tinha se tornado essencial. Talvez tenha sido numa conversa boba que virou risada, ou num silêncio confortável que não precisou de palavra nenhuma. Sei apenas que, em algum ponto, deixei de imaginar meus planos sem te incluir neles.</p>
+
+        <p class="letter-paragraph">Gosto de pensar em você nos detalhes pequenos: no jeito que você fala quando está animada com alguma coisa, na paciência que tem comigo nos meus dias mais difíceis, na forma como transforma qualquer lugar comum em algo que eu quero guardar na memória. Você tem esse dom de tornar tudo mais bonito só por estar presente.</p>
+
+        <p class="letter-paragraph">Tem noites em que eu paro, olho pro céu, e penso em como é bom ter alguém pra dividir o silêncio, os mistérios, as músicas que a gente canta errado, as séries que a gente maratona sem dó, os planos malucos e os sonhos mais simples. Com você, até o comum vira especial.</p>
+
+        <p class="letter-paragraph">Eu queria que você soubesse que esse carinho não é feito só de datas comemorativas ou momentos perfeitos. Ele mora nos dias normais também: numa mensagem de bom dia, numa ligação boba, num "cheguei bem" que me deixa mais tranquilo. É ali, no dia a dia, que eu mais sinto certeza de nós.</p>
+
+        <p class="letter-paragraph">Se um dia você duvidar do quanto é amada, eu quero que volte aqui, releia essas palavras, e lembre: existe alguém, em algum lugar, torcendo genuinamente pela sua felicidade e guardando cada detalhe seu com o maior carinho do mundo.</p>
+
+        <p class="letter-signoff">Com tudo que sinto e nem sempre sei dizer em voz alta,</p>
+        <p class="letter-signature" id="letterSignature">seu.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       LETREIRO — CAPÍTULO II (inspirado na estética da Ariana Grande)
+       Mesmo tratamento do letreiro anterior, mas com tipografia mais suave
+       (itálico, sem caixa alta) para combinar com "delicado e elegante".
+       ================================================================ -->
+  <section id="titulo-ariana" class="section chapter-card" data-theme="ag">
+    <div class="chapter-card-glow" aria-hidden="true"></div>
+    <div class="chapter-frame" aria-hidden="true">
+      <span class="corner-mark corner-mark--tl"></span>
+      <span class="corner-mark corner-mark--tr"></span>
+      <span class="corner-mark corner-mark--bl"></span>
+      <span class="corner-mark corner-mark--br"></span>
+    </div>
+    <div class="chapter-card-content reveal" data-reveal="zoom">
+      <span class="eyebrow eyebrow--center">capítulo três</span>
+      <h2 class="wordmark">
+        <span class="wordmark-main wordmark-main--soft">Ariana Grande</span>
+      </h2>
+      <svg class="ornament" viewBox="0 0 300 30" width="210" height="22" aria-hidden="true">
+        <path d="M0 15 C 55 2, 95 2, 128 15 L145 8 L162 15 C195 2, 235 2, 300 15" stroke="#e4cd9d" stroke-width="1" fill="none"/>
+        <circle cx="145" cy="15" r="3.5" fill="#e4cd9d"/>
+      </svg>
+      <p class="chapter-card-line">todo brilho tem um pouco de você nele.</p>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       CAPÍTULO II — MOTIVOS (inspirado em Ariana Grande: branco, brilho, rosa)
+       ================================================================ -->
+  <section id="motivos" class="section" data-theme="ag">
+    <div class="sparkle-layer" id="sparkleMotivos" aria-hidden="true"></div>
+    <div class="section-inner">
+      <p class="eyebrow reveal" data-reveal="fade-up">capítulo quatro</p>
+      <h2 class="section-title reveal" data-reveal="fade-up">Motivos Pelos Quais Você É Especial</h2>
+      <p class="section-subtitle reveal" data-reveal="fade-up">uma lista que eu poderia continuar para sempre</p>
+
+      <!-- PERSONALIZE: adicione ou troque os motivos por coisas específicas dela -->
+      <div class="card-grid" id="motivosGrid">
+        <div class="tilt-card glass-card reveal" data-reveal="zoom"><span class="card-icon">✦</span><p>Porque seu jeito de rir ilumina qualquer ambiente.</p></div>
+        <div class="tilt-card glass-card reveal" data-reveal="zoom"><span class="card-icon">✦</span><p>Porque você se importa com detalhes que quase ninguém mais repara.</p></div>
+        <div class="tilt-card glass-card reveal" data-reveal="zoom"><span class="card-icon">✦</span><p>Porque sua força é silenciosa e, ainda assim, inspira todo mundo ao redor.</p></div>
+        <div class="tilt-card glass-card reveal" data-reveal="zoom"><span class="card-icon">✦</span><p>Porque você me faz querer ser uma versão melhor de mim mesmo.</p></div>
+        <div class="tilt-card glass-card reveal" data-reveal="zoom"><span class="card-icon">✦</span><p>Porque seu coração é generoso mesmo quando ninguém está olhando.</p></div>
+        <div class="tilt-card glass-card reveal" data-reveal="zoom"><span class="card-icon">✦</span><p>Porque você é, ao mesmo tempo, meu porto seguro e minha aventura favorita.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       DETALHES
+       ================================================================ -->
+  <section id="detalhes" class="section" data-theme="ag">
+    <div class="section-inner">
+      <p class="eyebrow reveal" data-reveal="fade-up">capítulo cinco</p>
+      <h2 class="section-title reveal" data-reveal="fade-up">Pequenos Detalhes Que Amo Em Você</h2>
+      <p class="section-subtitle reveal" data-reveal="fade-up">as coisas minúsculas que fazem toda a diferença</p>
+
+      <!-- PERSONALIZE: essa lista fica ainda melhor com manias e trejeitos reais dela -->
+      <div class="card-grid card-grid--alt" id="detalhesGrid">
+        <div class="tilt-card glass-card reveal" data-reveal="slide-right"><span class="card-icon">❀</span><p>O jeitinho que você faz quando está concentrada em alguma coisa.</p></div>
+        <div class="tilt-card glass-card reveal" data-reveal="slide-right"><span class="card-icon">❀</span><p>Aquela playlist particular que você tem pra cada tipo de humor.</p></div>
+        <div class="tilt-card glass-card reveal" data-reveal="slide-right"><span class="card-icon">❀</span><p>Como você fica linda mesmo sem perceber, nos dias mais simples.</p></div>
+        <div class="tilt-card glass-card reveal" data-reveal="slide-right"><span class="card-icon">❀</span><p>Suas manias que, no fundo — e só entre a gente — eu adoro.</p></div>
+        <div class="tilt-card glass-card reveal" data-reveal="slide-right"><span class="card-icon">❀</span><p>O carinho que você coloca até nos gestos mais simples.</p></div>
+        <div class="tilt-card glass-card reveal" data-reveal="slide-right"><span class="card-icon">❀</span><p>Sua forma única de tornar qualquer dia mais leve.</p></div>
+      </div>
+
+      <!-- coração escondido #1 -->
+      <button class="hidden-heart" data-message="psst… você encontrou um segredo: eu sorrio sozinho quando lembro de você." aria-label="Segredo escondido">♥</button>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       TRILHA SONORA (destaque do player de música, dentro do capítulo Ariana Grande)
+       ================================================================ -->
+  <section id="trilha-sonora" class="section section--center" data-theme="ag">
+    <div class="sparkle-layer" id="sparkleTrilha" aria-hidden="true"></div>
+    <div class="section-inner section-inner--narrow reveal" data-reveal="zoom">
+      <p class="eyebrow reveal" data-reveal="fade-up">a música que é só nossa</p>
+      <h2 class="section-title">Nossa Trilha Sonora</h2>
+      <p class="section-subtitle">toda boa história tem uma canção que a acompanha</p>
+
+      <button class="play-showcase" id="playShowcase" type="button" aria-label="Tocar ou pausar a música">
+        <span class="play-showcase-ring"></span>
+        <span class="play-showcase-icon" id="playShowcaseIcon">▶</span>
+      </button>
+      <div class="equalizer" id="equalizer" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <p class="play-showcase-caption" id="playShowcaseCaption">toque para começar</p>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       SONHOS PARA O FUTURO
+       ================================================================ -->
+  <section id="sonhos" class="section" data-theme="ag">
+    <div class="moon moon--soft" aria-hidden="true"></div>
+    <div class="section-inner">
+      <p class="eyebrow reveal" data-reveal="fade-up">capítulo seis</p>
+      <h2 class="section-title reveal" data-reveal="fade-up">Sonhos Para o Nosso Futuro</h2>
+      <p class="section-subtitle reveal" data-reveal="fade-up">tudo o que eu ainda quero viver ao seu lado</p>
+
+      <!-- PERSONALIZE: troque pelos sonhos e planos que vocês já conversaram -->
+      <ul class="dream-list" id="dreamList">
+        <li class="dream-item reveal" data-reveal="fade-up"><span class="dream-icon">☁</span>Viajar para lugares que a gente só via em foto.</li>
+        <li class="dream-item reveal" data-reveal="fade-up"><span class="dream-icon">☁</span>Construir uma rotina cheia de pequenos carinhos diários.</li>
+        <li class="dream-item reveal" data-reveal="fade-up"><span class="dream-icon">☁</span>Comemorar cada conquista, grande ou pequena, sempre juntos.</li>
+        <li class="dream-item reveal" data-reveal="fade-up"><span class="dream-icon">☁</span>Criar memórias novas em cada estação do ano.</li>
+        <li class="dream-item reveal" data-reveal="fade-up"><span class="dream-icon">☁</span>Envelhecer contando essa mesma história — só que com muito mais capítulos.</li>
+      </ul>
+
+      <!-- coração escondido #2 -->
+      <button class="hidden-heart" data-message="outro segredo: você é quase sempre a última coisa em que eu penso antes de dormir." aria-label="Segredo escondido">♥</button>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       LETREIRO — CAPÍTULO III (inspirado em Teen Wolf)
+       Mesmo tratamento do letreiro TVD, agora nos tons dourado/prateado do capítulo.
+       ================================================================ -->
+  <section id="titulo-teenwolf" class="section chapter-card" data-theme="tw">
+    <div class="chapter-card-glow" aria-hidden="true"></div>
+    <div class="chapter-frame" aria-hidden="true">
+      <span class="corner-mark corner-mark--tl"></span>
+      <span class="corner-mark corner-mark--tr"></span>
+      <span class="corner-mark corner-mark--bl"></span>
+      <span class="corner-mark corner-mark--br"></span>
+    </div>
+    <div class="chapter-card-content reveal" data-reveal="zoom">
+      <span class="eyebrow eyebrow--center">capítulo sete</span>
+      <h2 class="wordmark">
+        <span class="wordmark-main">Teen Wolf</span>
+      </h2>
+      <svg class="ornament" viewBox="0 0 300 30" width="210" height="22" aria-hidden="true">
+        <path d="M0 15 C 55 2, 95 2, 128 15 L145 8 L162 15 C195 2, 235 2, 300 15" stroke="#e4cd9d" stroke-width="1" fill="none"/>
+        <circle cx="145" cy="15" r="3.5" fill="#e4cd9d"/>
+      </svg>
+      <p class="chapter-card-line">porque o que é selvagem também sabe ser fiel.</p>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       CAPÍTULO III — PROMESSAS (inspirado em Teen Wolf: floresta, lua cheia)
+       ================================================================ -->
+  <section id="promessas" class="section" data-theme="tw">
+    <div class="forest-silhouette forest-silhouette--dense" data-parallax="0.03" aria-hidden="true">
+      <svg viewBox="0 0 1440 260" preserveAspectRatio="none"><polygon points="0,260 0,130 30,170 55,70 80,150 100,50 130,160 155,75 180,140 205,45 230,155 255,90 280,170 305,55 330,145 355,95 380,180 405,50 430,160 455,85 480,170 505,60 530,150 555,105 580,180 605,55 630,155 655,90 680,170 705,45 730,150 755,100 780,175 805,60 830,155 855,80 880,170 905,50 930,160 955,95 980,180 1005,55 1030,150 1055,95 1080,175 1105,50 1130,160 1155,85 1180,170 1205,45 1230,155 1255,100 1280,180 1305,55 1330,150 1355,90 1380,170 1405,60 1440,150 1440,260" fill="#070a16"/></svg>
+    </div>
+    <div class="moon moon--full" data-parallax="0.1" aria-hidden="true"></div>
+    <div class="glow-eyes" aria-hidden="true">
+      <span class="eye"></span><span class="eye"></span>
+      <span class="eye"></span><span class="eye"></span>
+    </div>
+    <div class="mist mist--forest" aria-hidden="true"></div>
+    <div class="section-inner">
+      <p class="eyebrow reveal" data-reveal="fade-up">capítulo oito</p>
+      <h2 class="section-title reveal" data-reveal="fade-up">Promessas</h2>
+      <p class="section-subtitle reveal" data-reveal="fade-up">algumas coisas que eu escolho, todos os dias, de novo</p>
+
+      <div class="promise-list" id="promiseList">
+        <div class="promise-item glass-card reveal" data-reveal="slide-right"><span class="promise-mark">01</span><p>Estar presente, mesmo nos dias mais silenciosos.</p></div>
+        <div class="promise-item glass-card reveal" data-reveal="slide-right"><span class="promise-mark">02</span><p>Ouvir antes de julgar, sempre.</p></div>
+        <div class="promise-item glass-card reveal" data-reveal="slide-right"><span class="promise-mark">03</span><p>Comemorar suas vitórias como se fossem minhas.</p></div>
+        <div class="promise-item glass-card reveal" data-reveal="slide-right"><span class="promise-mark">04</span><p>Ser o seu lugar seguro sempre que você precisar.</p></div>
+        <div class="promise-item glass-card reveal" data-reveal="slide-right"><span class="promise-mark">05</span><p>Escolher você de novo, todos os dias, sem exceção.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       LINHA DO TEMPO
+       ================================================================ -->
+  <section id="linha-do-tempo" class="section" data-theme="tw">
+    <div class="section-inner">
+      <p class="eyebrow reveal" data-reveal="fade-up">capítulo nove</p>
+      <h2 class="section-title reveal" data-reveal="fade-up">Linha do Tempo</h2>
+      <p class="section-subtitle reveal" data-reveal="fade-up">cada fase da lua marcou uma fase nossa</p>
+
+      <!-- PERSONALIZE: troque as datas e descrições pelos marcos reais de vocês -->
+      <div class="timeline" id="timeline">
+        <div class="timeline-item reveal" data-reveal="slide-right">
+          <span class="timeline-moon">🌑</span>
+          <div class="timeline-content glass-card"><span class="timeline-date">o início</span><p>O primeiro "oi" que eu não sabia que mudaria tanta coisa.</p></div>
+        </div>
+        <div class="timeline-item timeline-item--right reveal" data-reveal="slide-left">
+          <span class="timeline-moon">🌓</span>
+          <div class="timeline-content glass-card"><span class="timeline-date">pouco depois</span><p>O primeiro encontro — e a certeza de que eu ia querer um segundo.</p></div>
+        </div>
+        <div class="timeline-item reveal" data-reveal="slide-right">
+          <span class="timeline-moon">🌕</span>
+          <div class="timeline-content glass-card"><span class="timeline-date">um marco</span><p>O primeiro "eu te amo" dito sem medo.</p></div>
+        </div>
+        <div class="timeline-item timeline-item--right reveal" data-reveal="slide-left">
+          <span class="timeline-moon">🌗</span>
+          <div class="timeline-content glass-card"><span class="timeline-date">hoje</span><p>Aqui, montando esse site, e sorrindo sozinho só de pensar em você lendo.</p></div>
+        </div>
+        <div class="timeline-item reveal" data-reveal="slide-right">
+          <span class="timeline-moon">🌙</span>
+          <div class="timeline-content glass-card"><span class="timeline-date">o que vem a seguir</span><p>Tudo o que a gente ainda vai viver — esse capítulo, a gente escreve junto.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       GALERIA
+       ================================================================ -->
+  <section id="galeria" class="section" data-theme="tw">
+    <div class="section-inner">
+      <p class="eyebrow reveal" data-reveal="fade-up">capítulo dez</p>
+      <h2 class="section-title reveal" data-reveal="fade-up">Galeria</h2>
+      <p class="section-subtitle reveal" data-reveal="fade-up">alguns momentos que eu quis guardar aqui</p>
+
+      <!-- PERSONALIZE: coloque as fotos dentro da pasta /fotos com esses nomes exatos
+           (foto1.jpg até foto6.jpg) — ou troque o "src" pelo nome que preferir.
+           Enquanto não houver foto, aparece um coração no lugar, sem quebrar o layout. -->
+      <div class="gallery-grid" id="galleryGrid">
+        <figure class="gallery-item reveal" data-reveal="zoom"><img src="fotos/foto1.jpg" alt="Uma memória nossa" loading="lazy" onerror="this.parentElement.classList.add('gallery-item--empty')"><figcaption></figcaption></figure>
+        <figure class="gallery-item reveal" data-reveal="zoom"><img src="fotos/foto2.jpg" alt="Uma memória nossa" loading="lazy" onerror="this.parentElement.classList.add('gallery-item--empty')"><figcaption></figcaption></figure>
+        <figure class="gallery-item reveal" data-reveal="zoom"><img src="fotos/foto3.jpg" alt="Uma memória nossa" loading="lazy" onerror="this.parentElement.classList.add('gallery-item--empty')"><figcaption></figcaption></figure>
+        <figure class="gallery-item reveal" data-reveal="zoom"><img src="fotos/foto4.jpg" alt="Uma memória nossa" loading="lazy" onerror="this.parentElement.classList.add('gallery-item--empty')"><figcaption></figcaption></figure>
+        <figure class="gallery-item reveal" data-reveal="zoom"><img src="fotos/foto5.jpg" alt="Uma memória nossa" loading="lazy" onerror="this.parentElement.classList.add('gallery-item--empty')"><figcaption></figcaption></figure>
+        <figure class="gallery-item reveal" data-reveal="zoom"><img src="fotos/foto6.jpg" alt="Uma memória nossa" loading="lazy" onerror="this.parentElement.classList.add('gallery-item--empty')"><figcaption></figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- Lightbox da galeria -->
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Foto ampliada">
+    <button class="lightbox-close" id="lightboxClose" aria-label="Fechar">✕</button>
+    <img class="lightbox-img" id="lightboxImg" src="" alt="">
+    <p class="lightbox-caption" id="lightboxCaption"></p>
+  </div>
+
+  <!-- ================================================================
+       FRASES
+       ================================================================ -->
+  <section id="frases" class="section section--center" data-theme="tw">
+    <div class="section-inner section-inner--narrow">
+      <p class="eyebrow reveal" data-reveal="fade-up">capítulo onze</p>
+      <h2 class="section-title reveal" data-reveal="fade-up">Frases</h2>
+
+      <div class="quote-carousel" id="quoteCarousel">
+        <p class="quote-text is-active" data-index="0">"Existem amores que gritam. O nosso sabe sussurrar — e ainda assim ser inesquecível."</p>
+        <p class="quote-text" data-index="1">"Você é a razão pela qual eu ainda acredito em finais bonitos."</p>
+        <p class="quote-text" data-index="2">"Entre mil histórias possíveis, eu escolheria a nossa sempre de novo."</p>
+        <p class="quote-text" data-index="3">"Comum é o que a gente nunca foi."</p>
+        <p class="quote-text" data-index="4">"Se o amor tivesse um som, o nosso seria o silêncio confortável que a gente compartilha."</p>
+        <p class="quote-text" data-index="5">"De agora em diante, toda lua cheia vai me lembrar de você."</p>
+      </div>
+      <div class="quote-dots" id="quoteDots" aria-hidden="true"></div>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       CÉU ESTRELADO
+       ================================================================ -->
+  <section id="ceu-estrelado" class="section section--center" data-theme="tw">
+    <div class="starfield" id="starfield" aria-hidden="true"></div>
+    <div class="moon moon--full moon--climax" aria-hidden="true"></div>
+    <div class="section-inner reveal" data-reveal="fade">
+      <p class="eyebrow reveal" data-reveal="fade-up">sob o mesmo céu</p>
+      <h2 class="section-title">Céu Estrelado</h2>
+      <p class="starfield-text">Diz a lenda que quem faz um pedido olhando para a lua cheia, com a pessoa certa ao lado, guarda esse desejo para sempre. O meu, você já sabe: continuar essa história ao seu lado.</p>
+      <p class="starfield-hint">toque em uma estrela para fazer um pedido</p>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       ÚLTIMA MENSAGEM
+       ================================================================ -->
+  <section id="mensagem-final" class="section section--center" data-theme="tw">
+    <div class="section-inner reveal" data-reveal="zoom">
+      <p class="eyebrow reveal" data-reveal="fade-up">para fechar — por enquanto</p>
+      <h2 class="final-message">Essa não é uma despedida.<br>É só o intervalo entre um capítulo e outro.</h2>
+      <p class="final-message-sub">E eu mal posso esperar para viver o próximo, com você.</p>
+      <!-- coração escondido #3 -->
+      <button class="hidden-heart hidden-heart--final" data-message="último segredo (por enquanto): essa página inteira ainda é pouco perto do tanto que eu sinto." aria-label="Segredo escondido">♥</button>
+    </div>
+  </section>
+
+</main>
+
+<!-- ================================================================
+     RODAPÉ
+     ================================================================ -->
+<footer class="footer" data-theme="tw">
+  <div class="footer-hearts" aria-hidden="true">
+    <span>♥</span><span>♥</span><span>♥</span>
+  </div>
+  <p class="footer-message">Feito com o coração inteiro, para a pessoa que o faz bater mais forte.</p>
+  <p class="footer-signature" id="footerSignature">com todo o meu amor, hoje e sempre.</p>
+  <p class="footer-year">© <span id="footerYear"></span> — nossa história, em construção.</p>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
